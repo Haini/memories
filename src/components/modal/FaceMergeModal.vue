@@ -121,7 +121,7 @@ async function clickFace(face: IFace) {
   try {
     // Get all files for current face
     const signal = abort.renew();
-    let res = (await client.getDirectoryContents(`/recognize/${user}/faces/${name}`, {
+    let res = (await client.getDirectoryContents(`${dav.recognizeRoot(user)}/faces/${name}`, {
       details: true,
       signal,
     })) as any;
@@ -145,8 +145,8 @@ async function clickFace(face: IFace) {
       // Move to new face with webdav
       try {
         await client.moveFile(
-          `/recognize/${user}/faces/${name}/${p.basename}`,
-          `/recognize/${face.user_id}/faces/${newName}/${p.basename}`,
+          `${dav.recognizeRoot(user)}/faces/${name}/${p.basename}`,
+          `${dav.recognizeRoot(face.user_id)}/faces/${newName}/${p.basename}`,
           { signal },
         );
       } catch (e) {

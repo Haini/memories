@@ -11,6 +11,7 @@ export type ISystemConfig = {
 
   'memories.gis_type': number;
   'memories.places.search.url': string;
+  'memories.recognize.provider': string;
   'memories.map.tile_servers': IConfig['map_tile_servers'];
 
   'memories.viewer.high_res_cond_default': IConfig['high_res_cond_default'];

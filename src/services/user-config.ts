@@ -160,6 +160,7 @@ function loadCached(): IConfig {
     albums_enabled: false,
     recognize_installed: false,
     recognize_enabled: false,
+    recognize_provider: 'recognize',
     facerecognition_installed: false,
     facerecognition_enabled: false,
     lens_enabled: false,

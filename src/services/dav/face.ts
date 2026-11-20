@@ -9,9 +9,17 @@ import { translate as t } from '@services/l10n';
 import { constants } from '@services/constants';
 import { API } from '@services/API';
 import { isAbortError } from '@services/utils/abort';
+import { config } from '@services/user-config';
 
 import type { IFace, IPhoto } from '@typings';
 import type { AbortOpts } from '@services/utils/abort';
+
+/**
+ * WebDAV root of the app serving Recognize-format faces for a user
+ */
+export function recognizeRoot(user: string) {
+  return `/${config.recognize_provider}/${user}`;
+}
 
 /**
  * Get list of faces
@@ -65,7 +73,7 @@ export async function* recognizeDeleteFaceImages(user: string, name: string, pho
   const calls = photos.map((p) => async () => {
     try {
       opts?.signal?.throwIfAborted();
-      await client.deleteFile(`/recognize/${user}/faces/${name}/${p.faceid}-${p.basename}`, {
+      await client.deleteFile(`${recognizeRoot(user)}/faces/${name}/${p.faceid}-${p.basename}`, {
         signal: opts?.signal,
       });
       return p.faceid!;
@@ -104,13 +112,13 @@ export async function* recognizeMoveFaceImages(
   const calls = photos.map((p) => async () => {
     try {
       opts?.signal?.throwIfAborted();
-      const dest = `/recognize/${user}/faces/${target}`;
+      const dest = `${recognizeRoot(user)}/faces/${target}`;
       const name = `${p.faceid}-${p.basename}`;
 
       // NULL source needs special handling
-      let source = `/recognize/${user}/faces/${face}`;
+      let source = `${recognizeRoot(user)}/faces/${face}`;
       if (face === constants.FACE_NULL) {
-        source = `/recognize/${user}/unassigned-faces`;
+        source = `${recognizeRoot(user)}/unassigned-faces`;
       }
 
       await client.moveFile(`${source}/${name}`, `${dest}/${name}`, {
@@ -139,7 +147,7 @@ export async function* recognizeMoveFaceImages(
  * @param name Name of face (or ID)
  */
 export async function recognizeDeleteFace(user: string, name: string, opts?: AbortOpts) {
-  return await client.deleteFile(`/recognize/${user}/faces/${name}`, {
+  return await client.deleteFile(`${recognizeRoot(user)}/faces/${name}`, {
     signal: opts?.signal,
   });
 }
@@ -152,7 +160,7 @@ export async function recognizeDeleteFace(user: string, name: string, opts?: Abo
  * @param target Target name of face
  */
 export async function recognizeRenameFace(user: string, name: string, target: string, opts?: AbortOpts) {
-  return await client.moveFile(`/recognize/${user}/faces/${name}`, `/recognize/${user}/faces/${target}`, {
+  return await client.moveFile(`${recognizeRoot(user)}/faces/${name}`, `${recognizeRoot(user)}/faces/${target}`, {
     signal: opts?.signal,
   });
 }
@@ -161,7 +169,7 @@ export async function recognizeRenameFace(user: string, name: string, target: st
  * Create a new face in recognize.
  */
 export async function recognizeCreateFace(user: string, name: string, opts?: AbortOpts) {
-  return await client.createDirectory(`/recognize/${user}/faces/${name}`, {
+  return await client.createDirectory(`${recognizeRoot(user)}/faces/${name}`, {
     signal: opts?.signal,
   });
 }

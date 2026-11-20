@@ -58,6 +58,9 @@ final class SystemConfig
         // Set to an empty string to disable location search.
         'memories.places.search.url' => 'https://nominatim.openstreetmap.org',
 
+        // App serving Recognize-format face tables and WebDAV tree
+        'memories.recognize.provider' => 'recognize',
+
         // Available map tile servers for the map view.
         // The first entry is the default for new users.
         'memories.map.tile_servers' => FreeTileServers::TILES,
@@ -364,7 +367,8 @@ final class SystemConfig
             return false;
         }
 
-        if ('true' !== $this->appConfig->getValueString('recognize', 'faces.enabled', 'false')) {
+        if ('recognize' === $this->recognizeProvider()
+            && 'true' !== $this->appConfig->getValueString('recognize', 'faces.enabled', 'false')) {
             return false;
         }
 
@@ -374,13 +378,30 @@ final class SystemConfig
     /** Check if recognize is installed */
     public function recognizeIsInstalled(): bool
     {
-        if (!$this->appManager->isEnabledForUser('recognize')) {
+        $provider = $this->recognizeProvider();
+        if (!$this->appManager->isEnabledForUser($provider)) {
             return false;
+        }
+
+        if ('recognize' !== $provider) {
+            return true;
         }
 
         $v = $this->appManager->getAppVersion('recognize');
 
         return version_compare($v, '3.8.0', '>=');
+    }
+
+    /**
+     * App that provides the Recognize-format face data: the tables
+     * {provider}_face_detections / {provider}_face_clusters and the
+     * WebDAV tree /remote.php/dav/{provider}/.
+     */
+    public function recognizeProvider(): string
+    {
+        $provider = (string) $this->get('memories.recognize.provider');
+
+        return preg_match('/^[a-z0-9_]+$/', $provider) ? $provider : 'recognize';
     }
 
     /** Check if Face Recognition is enabled by the user */

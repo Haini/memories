@@ -116,6 +116,7 @@ final class OtherController extends ApiController
                 'albums_enabled' => $this->systemConfig->albumsIsEnabled(),
                 'recognize_installed' => $this->systemConfig->recognizeIsInstalled(),
                 'recognize_enabled' => $this->systemConfig->recognizeIsEnabled(),
+                'recognize_provider' => $this->systemConfig->recognizeProvider(),
                 'facerecognition_installed' => $this->systemConfig->facerecognitionIsInstalled(),
                 'facerecognition_enabled' => $this->systemConfig->facerecognitionIsEnabled(),
                 'lens_enabled' => '' !== trim($this->lens->daemonUrl()),

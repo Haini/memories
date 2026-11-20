@@ -52,6 +52,11 @@ final class RecognizeController extends ApiController
                 throw Exceptions::NotEnabled('Recognize');
             }
 
+            // Only Recognize itself issues API keys
+            if ('recognize' !== $this->systemConfig->recognizeProvider()) {
+                return new JSONResponse(['apiKey' => ''], Http::STATUS_OK);
+            }
+
             try {
                 $key = $this->recognizeApiKeyManager?->generateApiKey();
                 if (null === $key || '' === $key) {

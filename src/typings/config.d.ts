@@ -21,6 +21,7 @@ declare module '@typings' {
     albums_enabled: boolean;
     recognize_installed: boolean;
     recognize_enabled: boolean;
+    recognize_provider: string;
     facerecognition_installed: boolean;
     facerecognition_enabled: boolean;
     lens_enabled: boolean;

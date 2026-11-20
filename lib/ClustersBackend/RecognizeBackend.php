@@ -107,7 +107,7 @@ final class RecognizeBackend extends Backend
             );
         } else {
             $nameField = is_numeric($faceName) ? 'rfc.id' : 'rfc.title';
-            $query->innerJoin('m', 'recognize_face_clusters', 'rfc', $query->expr()->andX(
+            $query->innerJoin('m', $this->clusters(), 'rfc', $query->expr()->andX(
                 $query->expr()->eq('rfc.user_id', $query->createNamedParameter($this->util->getUID())),
                 $query->expr()->eq($nameField, $query->createNamedParameter($faceName)),
             ));
@@ -115,10 +115,22 @@ final class RecognizeBackend extends Backend
         }
 
         // Join with detections
-        $query->innerJoin('m', 'recognize_face_detections', 'rfd', $query->expr()->andX(
+        $query->innerJoin('m', $this->detections(), 'rfd', $query->expr()->andX(
             $query->expr()->eq('rfd.file_id', 'm.fileid'),
             $clusterQuery,
         ));
+    }
+
+    /** Recognize-format detections table of the provider app */
+    private function detections(): string
+    {
+        return $this->systemConfig->recognizeProvider().'_face_detections';
+    }
+
+    /** Recognize-format clusters table of the provider app */
+    private function clusters(): string
+    {
+        return $this->systemConfig->recognizeProvider().'_face_clusters';
     }
 
     #[\Override]
@@ -147,10 +159,10 @@ final class RecognizeBackend extends Backend
 
         // SELECT all face clusters
         $count = $query->func()->count(SQL::distinct($query, 'm.fileid'), 'count');
-        $query->select('rfc.id', 'rfc.user_id', 'rfc.title', $count)->from('recognize_face_clusters', 'rfc');
+        $query->select('rfc.id', 'rfc.user_id', 'rfc.title', $count)->from($this->clusters(), 'rfc');
 
         // WHERE there are faces with this cluster
-        $query->innerJoin('rfc', 'recognize_face_detections', 'rfd', $query->expr()->eq('rfc.id', 'rfd.cluster_id'));
+        $query->innerJoin('rfc', $this->detections(), 'rfd', $query->expr()->eq('rfc.id', 'rfd.cluster_id'));
 
         // WHERE these items are memories indexed photos
         $query->innerJoin('rfd', 'memories', 'm', $query->expr()->eq('m.fileid', 'rfd.file_id'));
@@ -183,7 +195,7 @@ final class RecognizeBackend extends Backend
             type: self::clusterType(),
             clusterTable: 'rfc',
             clusterTableId: 'id',
-            objectTable: 'recognize_face_detections',
+            objectTable: $this->detections(),
             objectTableObjectId: 'id',
             objectTableClusterId: 'cluster_id',
         );
@@ -193,7 +205,7 @@ final class RecognizeBackend extends Backend
         $query = SQL::materialize($query, 'rfc');
         $cfSq = $this->tq->getBuilder();
         $cfSq->select('file_id')
-            ->from('recognize_face_detections', 'rfd')
+            ->from($this->detections(), 'rfd')
             ->where($cfSq->expr()->eq('rfd.id', 'rfc.cover'))
             ->setMaxResults(1)
         ;
@@ -242,7 +254,7 @@ final class RecognizeBackend extends Backend
             'm.h as image_height',
             'm.fileid',
             'm.datetaken',              // Just in case, for postgres
-        )->from('recognize_face_detections', 'rfd');
+        )->from($this->detections(), 'rfd');
 
         // WHERE detection belongs to this cluster
         $query->where($query->expr()->eq('rfd.cluster_id', $query->createNamedParameter($name)));
@@ -334,7 +346,7 @@ final class RecognizeBackend extends Backend
             $nameField = is_numeric($faceName) ? 'rfc.id' : 'rfc.title';
             $query = $this->tq->getBuilder();
             $query->select('id')
-                ->from('recognize_face_clusters', 'rfc')
+                ->from($this->clusters(), 'rfc')
                 ->where($query->expr()->eq($nameField, $query->createNamedParameter($faceName)))
                 ->andWhere($query->expr()->eq('rfc.user_id', $query->createNamedParameter($this->util->getUID())))
             ;
